@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS Voice Assistant</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>FRIDAY Voice Assistant</h1>
+        <!-- Add the GIF here -->
+        <img src="static/jarvis.gif.gif" alt="JARVIS GIF GIF" class="jarvis-gif-gif">
+        <img src="static/jarvis2.gif.gif" alt="JARVIS2 GIF GIF" class="jarvis2-gif-gif">
+        <img src="static/jarvis3.gif.gif" alt="jarvis3 GIF GIF" class="jarvis3-gif-gif">
+        <button id="micButton" onclick="startVoiceInput()">🎤 Click and Speak</button>
+        <div class="response" id="response"></div>
+        
+       
+
+    <script>
+        // Function to get the greeting based on the time of day
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) {
+                return "Good Morning";
+            } else if (hour >= 12 && hour < 18) {
+                return "Good Afternoon";
+            } else {
+                return "Good Evening";
+            }
+        }
+
+        // Function to speak the greeting using TTS
+        function speakGreeting() {
+            const greeting = getGreeting();
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = `${greeting}, I am FRIDAY. How can I assist you?`;
+
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(`${greeting}, I am FRIDAY. How can I assist you?`);
+            synth.speak(utterance);
+        }
+
+        // Function to start voice input
+        function startVoiceInput() {
+            // Speak the greeting when the button is clicked
+            speakGreeting();
+
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const spokenText = event.results[0][0].transcript;
+                console.log("Recognized speech:", spokenText); // Debugging log
+                document.getElementById('response').textContent = `You said: ${spokenText}`;
+                sendCommand(spokenText); // Send the recognized text to the backend
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Voice recognition error:', event.error); // Debugging log
+                document.getElementById('response').textContent = `Error: ${event.error}`;
+            };
+
+            recognition.onspeechend = () => {
+                console.log("Speech recognition ended."); // Debugging log
+                recognition.stop();
+            };
+        }
+
+        // Function to send command to the backend
+        async function sendCommand(command) {
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                const response = await fetch('/command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command: command }),
+                });
+                const data = await response.json();
+                responseDiv.textContent = data.response;
+
+                // Speak the response using TTS
+                speakResponse(data.response);
+            } catch (error) {
+                responseDiv.textContent = "Error communicating with the server.";
+            }
+        }
+
+        // Function to speak the response using TTS
+        function speakResponse(text) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            synth.speak(utterance);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+flask
+pyjokes
+wikipedia
+requests
